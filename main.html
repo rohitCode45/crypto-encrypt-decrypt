@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>JSON/JS Object Encrypt/Decrypt</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 300px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>JSON/JS Object Encrypt / Decrypt</h2>
+
+    <div class="container">
+
+        <div class="section">
+            <label for="jsonInput">Enter JSON or JS Object to Encrypt:</label>
+            <textarea
+                id="jsonInput">{\n  url: \"10.3.204.22\",\n  url_trend: \"10.3.204.22\",\n  base_api_configurations: {\n    api_protocol: \"http://\",\n    api_port: \":7081\",\n    websocket_protocol: \"ws://\",\n    websocket_port: \":8084\",\n  }\n}</textarea>
+            <button onclick="handleEncrypt()">Encrypt</button>
+            <label for="encryptedOutput">Encrypted Output:</label>
+            <textarea id="encryptedOutput" readonly></textarea>
+        </div>
+
+        <div class="section">
+            <label for="encryptedInput">Enter Encrypted String to Decrypt:</label>
+            <textarea id="encryptedInput"></textarea>
+            <button onclick="handleDecrypt()">Decrypt</button>
+            <label for="decryptedOutput">Decrypted JSON:</label>
+            <textarea id="decryptedOutput" readonly></textarea>
+        </div>
+
+    </div>
+
+    <script>
+        const cr_id = "a2f5c1b8e515e9fbc41f47c63494d3fdb3e61408f471fd7c6e6e218e18eaa9e4";
+
+        function enCo(dataObj) {
+            const stringified = JSON.stringify(dataObj);
+            const encrypted = CryptoJS.AES.encrypt(stringified, cr_id).toString();
+            return encrypted;
+        }
+
+        function deCo(en_str) {
+            const decrypted = CryptoJS.AES.decrypt(en_str, cr_id);
+            const plainText = decrypted.toString(CryptoJS.enc.Utf8);
+            return JSON.parse(plainText);
+        }
+
+        function parseInputAsObject(input) {
+            try {
+                // Try JSON first
+                return JSON.parse(input);
+            } catch (jsonErr) {
+                try {
+                    // Try to safely eval JS object-like input
+                    const sanitized = input
+                        .replace(/(\r\n|\n|\r)/gm, "")        // Remove newlines
+                        .replace(/,\s*}/g, "}")               // Remove trailing commas in objects
+                        .replace(/,\s*]/g, "]");              // Remove trailing commas in arrays
+
+                    return (new Function("return " + sanitized))();
+                } catch (evalErr) {
+                    throw new Error("Invalid JSON or JS object format.");
+                }
+            }
+        }
+
+        function handleEncrypt() {
+            const input = document.getElementById("jsonInput").value;
+            try {
+                const parsedObj = parseInputAsObject(input);
+                const encrypted = enCo(parsedObj);
+                document.getElementById("encryptedOutput").value = encrypted;
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        function handleDecrypt() {
+            const encryptedText = document.getElementById("encryptedInput").value;
+            try {
+                const decryptedObj = deCo(encryptedText);
+                document.getElementById("decryptedOutput").value = JSON.stringify(decryptedObj, null, 2);
+            } catch (e) {
+                alert("Decryption failed! " + e.message);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
